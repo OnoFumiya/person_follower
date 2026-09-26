@@ -9,13 +9,16 @@ DIR=`pwd`
 cd ..
 
 git clone -b ${ROS_DISTRO}-devel https://github.com/OnoFumiya/ssd_ros.git
-# Check if install.sh exists in each package
-if [ -f ssd_ros/install.sh ]; then
-    echo "Running install.sh in ssd_ros."
-    cd ssd_ros
-    bash install.sh
-    cd ..
-fi
+echo "Running install.sh in ssd_ros."
+cd ssd_ros
+bash install.sh
+cd ..
+
+git clone -b ${ROS_DISTRO}-devel https://github.com/OnoFumiya/2d_lidar_person_detection.git
+echo "Running install.sh in 2d_lidar_person_detection."
+cd 2d_lidar_person_detection
+bash install.sh
+cd ..
 
 # Download ROS packages
 sudo apt-get update
