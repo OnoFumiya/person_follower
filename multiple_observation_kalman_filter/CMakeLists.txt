@@ -20,7 +20,11 @@ include_directories(
 
 # Add library
 add_library(${PROJECT_NAME} src/multiple_observation_kalman_filter.cpp)
-ament_target_dependencies(${PROJECT_NAME} rclcpp Eigen3)
+# ament_target_dependencies(${PROJECT_NAME} rclcpp Eigen3)
+target_link_libraries(${PROJECT_NAME} 
+  rclcpp::rclcpp
+  ${Eigen3_LIBS}
+)
 
 # Install targets
 install(

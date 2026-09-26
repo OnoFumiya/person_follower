@@ -5,15 +5,16 @@
 #include <cmath>
 #include <limits>
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.hpp>
+#include <tf2_ros/buffer.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <geometry_msgs/msg/point_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
-#include <sobits_interfaces/action/move_joint.hpp>
+// #include <sobits_interfaces/action/move_joint.hpp>
+#include <nekomimi_bot_interfaces/action/move_joint.hpp>
 #include "multiple_sensor_person_tracking/msg/following_position.hpp"
 #include "multiple_observation_kalman_filter/multiple_observation_kalman_filter.hpp"
 
@@ -30,11 +31,13 @@ namespace multiple_sensor_person_tracking {
 			tf2_ros::Buffer tfBuffer_;
             std::shared_ptr<tf2_ros::TransformListener> tf_sub_;
 
-            rclcpp_action::Client<sobits_interfaces::action::MoveJoint>::SharedPtr head_pantilt_ctr_;
+            // rclcpp_action::Client<sobits_interfaces::action::MoveJoint>::SharedPtr head_pantilt_ctr_;
+            rclcpp_action::Client<nekomimi_bot_interfaces::action::MoveJoint>::SharedPtr head_pantilt_ctr_;
 
 			std::shared_ptr<geometry_msgs::msg::Point> tracking_position_;
 			double pre_tilt_;
 			double pre_pan_;
+                std::string head_rotation_type_;
 				double tilt_angle_min_;
 				double tilt_angle_max_;
                 double pan_angle_min_;
@@ -132,6 +135,11 @@ void multiple_sensor_person_tracking::PersonAimSensorRotator::callbackData (
 		double distance = std::hypotf(pt.x, pt.y);
 		double angle = std::atan2( pt.y, pt.x );
 		double pan_angle, tilt_angle;
+    if (!std::isfinite(angle)) {
+        RCLCPP_INFO(
+            this->get_logger(), 
+            "\033[31mangle error\033[0m");
+    }
 
     if (!std::isfinite(distance) || !std::isfinite(angle)) {
         RCLCPP_WARN_THROTTLE(
@@ -144,6 +152,7 @@ void multiple_sensor_person_tracking::PersonAimSensorRotator::callbackData (
 	if (distance < 1.0e-6) {
         tilt_angle = 0.2;
     }
+    tilt_angle *= (head_rotation_type_ == "rpy") ? -1.0 : 1.0;
     tilt_angle = std::clamp(tilt_angle, tilt_angle_min_, tilt_angle_max_);
     pan_angle = std::clamp(angle, pan_angle_min_, pan_angle_max_);
 
@@ -184,7 +193,8 @@ void multiple_sensor_person_tracking::PersonAimSensorRotator::callbackData (
 		            return;
 	        }
 
-        auto goal_msg = sobits_interfaces::action::MoveJoint::Goal();
+        // auto goal_msg = sobits_interfaces::action::MoveJoint::Goal();
+        auto goal_msg = nekomimi_bot_interfaces::action::MoveJoint::Goal();
         goal_msg.target_joint_names = { head_pan_joint_name_, head_tilt_joint_name_ };
         goal_msg.target_joint_rad = { pan_angle, tilt_angle };
         goal_msg.time_allowance.sec = static_cast<int>(sec);
@@ -199,9 +209,11 @@ void multiple_sensor_person_tracking::PersonAimSensorRotator::callbackData (
             tilt_angle,
             sec);
 
-	        auto send_goal_options = rclcpp_action::Client<sobits_interfaces::action::MoveJoint>::SendGoalOptions();
+	        // auto send_goal_options = rclcpp_action::Client<sobits_interfaces::action::MoveJoint>::SendGoalOptions();
+	        auto send_goal_options = rclcpp_action::Client<nekomimi_bot_interfaces::action::MoveJoint>::SendGoalOptions();
 	        send_goal_options.goal_response_callback =
-	            [this](const rclcpp_action::ClientGoalHandle<sobits_interfaces::action::MoveJoint>::SharedPtr & goal_handle) {
+	            // [this](const rclcpp_action::ClientGoalHandle<sobits_interfaces::action::MoveJoint>::SharedPtr & goal_handle) {
+	            [this](const rclcpp_action::ClientGoalHandle<nekomimi_bot_interfaces::action::MoveJoint>::SharedPtr & goal_handle) {
 	                if (!goal_handle) {
 	                    goal_in_flight_ = false;
 	                    RCLCPP_WARN(this->get_logger(), "[Action Failed] MoveJoint goal rejected.");
@@ -237,13 +249,14 @@ multiple_sensor_person_tracking::CallbackReturn multiple_sensor_person_tracking:
     
     // Declare parameters
     try {
-        this->declare_parameter<std::string>("following_position_topic_name", "sobits_follower/multiple_sensor_person_tracking/following_position");
+        this->declare_parameter<std::string>("following_position_topic_name", "person_follower/multiple_sensor_person_tracking/following_position");
         this->declare_parameter<bool>("use_rotate", true);
         this->declare_parameter<bool>("use_smoothing", true);
         this->declare_parameter<double>("pan_angle_min_deg", -90.0);
         this->declare_parameter<double>("pan_angle_max_deg", 90.0);
         this->declare_parameter<double>("tilt_angle_min_deg", -15.0);
         this->declare_parameter<double>("tilt_angle_max_deg", 15.0);
+        this->declare_parameter<std::string>("head_rotation_type", "pan_tilt"); // "pan_tilt" or "rpy"
         this->declare_parameter<double>("person_height", 1.7);
         this->declare_parameter<double>("camera2person_height", 0.2);
         this->declare_parameter<double>("smoothing_gain", 0.5);
@@ -269,6 +282,7 @@ multiple_sensor_person_tracking::CallbackReturn multiple_sensor_person_tracking:
     this->get_parameter("pan_angle_max_deg", pan_angle_max_);
     this->get_parameter("tilt_angle_min_deg", tilt_angle_min_);
     this->get_parameter("tilt_angle_max_deg", tilt_angle_max_);
+    this->get_parameter("head_rotation_type", head_rotation_type_);
     this->get_parameter("person_height", person_height_);
     this->get_parameter("camera2person_height", person_height_);
     this->get_parameter("smoothing_gain", smoothing_gain_);
@@ -312,9 +326,10 @@ multiple_sensor_person_tracking::CallbackReturn multiple_sensor_person_tracking:
     // Initialize class members
     tf_sub_.reset(new tf2_ros::TransformListener(tfBuffer_));
 
-    pub_marker_ = create_publisher< visualization_msgs::msg::Marker >( "sobits_follower/multiple_sensor_person_tracking/rotator_marker", 1 );
+    pub_marker_ = create_publisher< visualization_msgs::msg::Marker >( "person_follower/multiple_sensor_person_tracking/rotator_marker", 1 );
 
-    head_pantilt_ctr_ = rclcpp_action::create_client<sobits_interfaces::action::MoveJoint>( this, head_pantilt_action_name_ );
+    // head_pantilt_ctr_ = rclcpp_action::create_client<sobits_interfaces::action::MoveJoint>( this, head_pantilt_action_name_ );
+    head_pantilt_ctr_ = rclcpp_action::create_client<nekomimi_bot_interfaces::action::MoveJoint>( this, head_pantilt_action_name_ );
     goal_in_flight_ = false;
     tracking_position_ = std::make_shared<geometry_msgs::msg::Point>();
     pre_pan_ = std::numeric_limits<double>::quiet_NaN();

@@ -2,9 +2,9 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/subscriber.hpp>
+#include <message_filters/time_synchronizer.hpp>
+#include <message_filters/sync_policies/approximate_time.hpp>
 
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -99,8 +99,8 @@ namespace person_following_control {
 void person_following_control::PersonFollowing::declareParameters() {
     this->declare_parameter<std::string>("command_velocity_topic_name", "/commands/velocity");
     this->declare_parameter<std::string>("stop_command_velocity_topic_name", "");
-    this->declare_parameter<std::string>("obstacles_topic_name", "sobits_follower/multiple_sensor_person_tracking/obstacles");
-    this->declare_parameter<std::string>("following_position_topic_name", "sobits_follower/multiple_sensor_person_tracking/following_position");
+    this->declare_parameter<std::string>("obstacles_topic_name", "person_follower/multiple_sensor_person_tracking/obstacles");
+    this->declare_parameter<std::string>("following_position_topic_name", "person_follower/multiple_sensor_person_tracking/following_position");
     this->declare_parameter<std::string>("odom_topic_name", "/odom");
     this->declare_parameter<int>("following_method", FollowingMethod::VSM_DWA);
     this->declare_parameter<double>("following_distance", 1.0);

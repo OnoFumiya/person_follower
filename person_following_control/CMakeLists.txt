@@ -20,26 +20,35 @@ find_package(visualization_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(rviz_common REQUIRED)
-find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+# find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 find_package(multiple_observation_kalman_filter REQUIRED)
 find_package(multiple_sensor_person_tracking REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
-find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED
-  Core
-  Widgets
-)
-set(QT_LIBRARIES Qt5::Widgets)
-add_definitions(-DQT_NO_KEYWORDS)
+# find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED
+#   Core
+#   Widgets
+# )
+# set(QT_LIBRARIES Qt5::Widgets)
+# add_definitions(-DQT_NO_KEYWORDS)
 
 include_directories(
   include
   ${PCL_INCLUDE_DIRS}
+  ${message_filters_INCLUDE_DIRS}
 )
 
 # Add Executables
 add_executable(robot_pose_broadcaster src/virtual_environment/robot_pose_broadcaster.cpp)
-ament_target_dependencies(robot_pose_broadcaster rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs nav_msgs visualization_msgs)
+# ament_target_dependencies(robot_pose_broadcaster rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs nav_msgs visualization_msgs)
+target_link_libraries(robot_pose_broadcaster
+  rclcpp::rclcpp
+  ${geometry_msgs_TARGETS}
+  ${pcl_ros_TARGETS}
+  ${tf2_geometry_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+)
 
 # TODO
 # add_executable(virtual_environment src/virtual_environment/virtual_environment.cpp)
@@ -56,24 +65,45 @@ add_library(${PROJECT_NAME} SHARED
             src/rviz_panel_plugin/qt_touch.cpp
             )
 
-ament_target_dependencies(${PROJECT_NAME} 
-  rclcpp 
-  rclcpp_components
-  rclcpp_lifecycle
-  geometry_msgs 
-  nav_msgs 
-  pcl_conversions 
-  pcl_ros 
-  tf2 
-  tf2_ros 
-  tf2_geometry_msgs
-  visualization_msgs 
-  sensor_msgs 
-  message_filters 
-  rviz_common
-  multiple_sensor_person_tracking)
-
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES})
+# ament_target_dependencies(${PROJECT_NAME} 
+#   rclcpp 
+#   rclcpp_components
+#   rclcpp_lifecycle
+#   geometry_msgs 
+#   nav_msgs 
+#   pcl_conversions 
+#   pcl_ros 
+#   tf2 
+#   tf2_ros 
+#   tf2_geometry_msgs
+#   visualization_msgs 
+#   sensor_msgs 
+#   message_filters 
+#   rviz_common
+#   multiple_sensor_person_tracking)
+target_link_libraries(${PROJECT_NAME}
+  rclcpp::rclcpp
+  # rclcpp_components::rclcpp_components
+  rclcpp_lifecycle::rclcpp_lifecycle
+  pcl_conversions::pcl_conversions
+  # pcl_ros::pcl_ros
+  tf2_ros::tf2_ros
+  pluginlib::pluginlib
+  ${rclcpp_components_TARGETS}
+  ${pcl_ros_TARGETS}
+  ${multiple_sensor_person_tracking_TARGETS}
+  ${message_filters_TARGETS}
+  ${rviz_common_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${tf2_geometry_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${pcl_ros_LIBRARIES}
+  ${message_filters_LIBRARIES}
+  # ${QT_LIBRARIES}
+  # multiple_sensor_person_tracking
+)
 
 # Register nodes as components explicitly
 rclcpp_components_register_nodes(${PROJECT_NAME}

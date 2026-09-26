@@ -10,8 +10,8 @@
 #include <geometry_msgs/msg/point_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.hpp>
+#include <tf2_ros/buffer.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <laser_geometry/laser_geometry.hpp>
@@ -685,9 +685,9 @@ multiple_sensor_person_tracking::CallbackReturn multiple_sensor_person_tracking:
     // Declare parameters
     try {
         this->declare_parameter<std::string>("scan_topic_name", "/scan");
-        this->declare_parameter<std::string>("pointcloud_nontravelable_region_topic_name", "sobits_follower/multiple_sensor_person_tracking/pointcloud_nontravelable_region");
+        this->declare_parameter<std::string>("pointcloud_nontravelable_region_topic_name", "person_follower/multiple_sensor_person_tracking/pointcloud_nontravelable_region");
         this->declare_parameter<std::string>("dr_spaam_topic_name", "/dr_spaam_detections");
-        this->declare_parameter<std::string>("body_detection_topic_name", "/sobits_follower/object_3d_poses");
+        this->declare_parameter<std::string>("body_detection_topic_name", "/person_follower/object_3d_poses");
         this->declare_parameter<std::string>("target_frame", "base_footprint");
         this->declare_parameter<std::string>("odom_frame_name", "odom");
         this->declare_parameter<std::string>("scan_frame_name", "");
@@ -749,19 +749,19 @@ multiple_sensor_person_tracking::CallbackReturn multiple_sensor_person_tracking:
         scan_topic_name, sensor_qos, std::bind(&PersonTracker::scan_callback, this, std::placeholders::_1));
 
     sub_nontravelable_region_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-        pointcloud_nontravelable_region_topic_name, sensor_qos, std::bind(&PersonTracker::nontravelableRegionCallback, this, std::placeholders::_1));
+        pointcloud_nontravelable_region_topic_name, 1, std::bind(&PersonTracker::nontravelableRegionCallback, this, std::placeholders::_1));
 
     sub_dr_spaam_ = create_subscription<geometry_msgs::msg::PoseArray>(
-        dr_spaam_topic_name, sensor_qos, std::bind(&PersonTracker::dr_spaam_callback, this, std::placeholders::_1));
+        dr_spaam_topic_name, 1, std::bind(&PersonTracker::dr_spaam_callback, this, std::placeholders::_1));
     
     sub_image_ = create_subscription<vision_msgs::msg::Detection3DArray>(
-        body_detection_topic_name, sensor_qos, std::bind(&PersonTracker::callbackPoseArray, this, std::placeholders::_1));
+        body_detection_topic_name, 1, std::bind(&PersonTracker::callbackPoseArray, this, std::placeholders::_1));
     
     // Create publishers
-    pub_following_position_ = create_publisher< multiple_sensor_person_tracking::msg::FollowingPosition >( "sobits_follower/multiple_sensor_person_tracking/following_position", 1 );
-    pub_marker_ = create_publisher< visualization_msgs::msg::MarkerArray >( "sobits_follower/multiple_sensor_person_tracking/tracker_marker", 1 );
-    pub_obstacles_ = create_publisher< sensor_msgs::msg::PointCloud2 >( "sobits_follower/multiple_sensor_person_tracking/obstacles", 1 );
-    pub_target_odom_ = create_publisher< geometry_msgs::msg::PointStamped >( "sobits_follower/multiple_sensor_person_tracking/target_postion_odom", 1 );
+    pub_following_position_ = create_publisher< multiple_sensor_person_tracking::msg::FollowingPosition >( "person_follower/multiple_sensor_person_tracking/following_position", 1 );
+    pub_marker_ = create_publisher< visualization_msgs::msg::MarkerArray >( "person_follower/multiple_sensor_person_tracking/tracker_marker", 1 );
+    pub_obstacles_ = create_publisher< sensor_msgs::msg::PointCloud2 >( "person_follower/multiple_sensor_person_tracking/obstacles", 1 );
+    pub_target_odom_ = create_publisher< geometry_msgs::msg::PointStamped >( "person_follower/multiple_sensor_person_tracking/target_postion_odom", 1 );
 
     // Initialize Kalman filter
     kf_ = std::make_unique<multiple_observation_kalman_filter::KalmanFilter>(0.033, 1000, 1.0);

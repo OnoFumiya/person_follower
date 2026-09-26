@@ -72,7 +72,7 @@ namespace multiple_observation_tracing_simulator {
         sub_observed_value_add_ = std::make_shared<message_filters::Subscriber<geometry_msgs::msg::PointStamped>>(this, "/observed_value_add");
 
         sync_ = std::make_shared<message_filters::Synchronizer<MySyncPolicy>>(
-            MySyncPolicy(10), *sub_true_value_, *sub_observed_value_, *sub_observed_value_add_);
+            MySyncPolicy(200), *sub_true_value_, *sub_observed_value_, *sub_observed_value_add_);
 
         sync_->registerCallback(std::bind(&Tracker::callbackMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 

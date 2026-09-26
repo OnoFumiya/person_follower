@@ -63,9 +63,9 @@ def _launch_setup(context):
         "use_realtime_priority": use_realtime_priority,
     }
 
-    namespace = str(config.get("namespace", "sobits_follower"))
+    namespace = str(config.get("namespace", "person_follower"))
     raw_cmd_vel_topic = _resolve_remap_topic(
-        config.get("raw_cmd_vel_topic", "sobits_follower/velocity_smoother/raw_cmd_vel"),
+        config.get("raw_cmd_vel_topic", "person_follower/velocity_smoother/raw_cmd_vel"),
         namespace,
     )
     output_cmd_vel_topic = _resolve_remap_topic(

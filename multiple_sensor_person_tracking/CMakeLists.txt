@@ -13,10 +13,13 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
-find_package(sobits_interfaces REQUIRED)
+find_package(vision_msgs REQUIRED)
+# find_package(sobits_interfaces REQUIRED)
+find_package(nekomimi_bot_interfaces REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(jsoncpp CONFIG REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(laser_geometry REQUIRED)
@@ -41,30 +44,48 @@ add_library(${PROJECT_NAME}_component SHARED
   src/person_aim_sensor_rotator_component.cpp
 )
 
-ament_target_dependencies(${PROJECT_NAME}_component
-  rclcpp
-  rclcpp_components
-  rclcpp_lifecycle
-  sensor_msgs
-  geometry_msgs
-  std_msgs
-  nav_msgs
-  visualization_msgs
-  sobits_interfaces
-  pcl_ros
-  pcl_conversions
-  tf2
-  tf2_ros
-  laser_geometry
-  pluginlib
-  multiple_observation_kalman_filter
-  OpenCV
-  cv_bridge
-)
+# ament_target_dependencies(${PROJECT_NAME}_component
+#   rclcpp
+#   rclcpp_components
+#   rclcpp_lifecycle
+#   sensor_msgs
+#   geometry_msgs
+#   std_msgs
+#   nav_msgs
+#   visualization_msgs
+#   sobits_interfaces
+#   pcl_ros
+#   pcl_conversions
+#   tf2
+#   tf2_ros
+#   laser_geometry
+#   pluginlib
+#   multiple_observation_kalman_filter
+#   OpenCV
+#   cv_bridge
+# )
 
 target_link_libraries(${PROJECT_NAME}_component 
+  rclcpp::rclcpp
+  # rclcpp_components::rclcpp_components
+  rclcpp_lifecycle::rclcpp_lifecycle
+  # pcl_ros::pcl_ros
+  tf2_ros::tf2_ros
+  pluginlib::pluginlib
+  laser_geometry::laser_geometry
+  ${rclcpp_components_TARGETS}
+  ${pcl_ros_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${std_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${vision_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  ${nekomimi_bot_interfaces_TARGETS}
   ${OpenCV_LIBRARIES}
-  ${multiple_observation_kalman_filter_LIBRARIES}
+  ${cv_bridge_TARGETS}
+  # ${multiple_observation_kalman_filter_LIBRARIES}
+  multiple_observation_kalman_filter::multiple_observation_kalman_filter
 )
 
 target_include_directories(${PROJECT_NAME}_component PUBLIC
